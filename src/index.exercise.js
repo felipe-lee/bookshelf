@@ -4,6 +4,7 @@ import { Dialog } from "@reach/dialog"
 import "@reach/dialog/styles.css";
 
 import {Logo} from 'components/logo'
+import {LoginForm} from 'components/LoginForm'
 
 const LOG_IN = "log in"
 const REGISTER = "register"
@@ -13,6 +14,14 @@ const App = () => {
   const [openModal, setOpenModal] = React.useState(NONE)
 
   const close = () => {setOpenModal(NONE)}
+
+  const handleLogIn = ({username, password}) => {
+    console.log(`Log In - username: ${username} | password: ${password}`)
+  }
+
+  const handleRegister = ({username, password}) => {
+    console.log(`Register - username: ${username} | password: ${password}`)
+  }
 
   return (
       <>
@@ -26,6 +35,7 @@ const App = () => {
           <Dialog isOpen={openModal === LOG_IN} onDismiss={close}>
             <button className="close-button" onClick={close}>Close</button>
             <h3>Log In</h3>
+            <LoginForm onSubmit={handleLogIn} buttonText={"Log In"}/>
           </Dialog>
         </div>
 
@@ -35,6 +45,7 @@ const App = () => {
           <Dialog aria-label="Log In Form" isOpen={openModal === REGISTER} onDismiss={close}>
             <button className="close-button" onClick={close}>Close</button>
             <h3>Register</h3>
+            <LoginForm onSubmit={handleRegister} buttonText={"Register"}/>
           </Dialog>
         </div>
       </>
