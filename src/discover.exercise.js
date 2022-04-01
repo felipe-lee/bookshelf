@@ -4,7 +4,8 @@ import {jsx} from '@emotion/core'
 import './bootstrap'
 import Tooltip from '@reach/tooltip'
 import React from 'react'
-import {FaSearch} from 'react-icons/fa'
+import {FaSearch, FaTimes} from 'react-icons/fa'
+import * as colors from 'styles/colors'
 import {Input, BookListUL, Spinner} from './components/lib'
 import {BookRow} from './components/book-row'
 import {client} from './utils/api-client'
@@ -13,12 +14,14 @@ const STATUSES = {
   IDLE: 'idle',
   LOADING: 'loading',
   SUCCESS: 'success',
+  ERROR: 'error',
 }
 
 function DiscoverBooksScreen() {
   // 🐨 add state for status ('idle', 'loading', or 'success'), data, and query
   const [status, setStatus] = React.useState(STATUSES.IDLE)
   const [data, setData] = React.useState(null)
+  const [error, setError] = React.useState('')
   const [query, setQuery] = React.useState('')
   const [queried, setQueried] = React.useState(false)
 
@@ -31,15 +34,22 @@ function DiscoverBooksScreen() {
 
     const endpoint = `books?query=${encodeURIComponent(query)}`
 
-    client(endpoint).then(apiData => {
-      setData(apiData)
+    client(endpoint)
+      .then(apiData => {
+        setData(apiData)
 
-      setStatus(STATUSES.SUCCESS)
-    })
+        setStatus(STATUSES.SUCCESS)
+      })
+      .catch(errorData => {
+        setError(errorData)
+
+        setStatus(STATUSES.ERROR)
+      })
   }, [queried, query])
 
   const isLoading = status === STATUSES.LOADING
   const isSuccess = status === STATUSES.SUCCESS
+  const isError = status === STATUSES.ERROR
 
   function handleSearchSubmit(event) {
     event.preventDefault()
@@ -70,11 +80,24 @@ function DiscoverBooksScreen() {
                 background: 'transparent',
               }}
             >
-              {isLoading ? <Spinner /> : <FaSearch aria-label="search" />}
+              {isLoading ? (
+                <Spinner />
+              ) : isError ? (
+                <FaTimes aria-label="error" css={{color: colors.danger}} />
+              ) : (
+                <FaSearch aria-label="search" />
+              )}
             </button>
           </label>
         </Tooltip>
       </form>
+
+      {isError ? (
+        <div css={{color: colors.danger}}>
+          <p>There was an error:</p>
+          <pre>{error.message}</pre>
+        </div>
+      ) : null}
 
       {isSuccess ? (
         data?.books?.length ? (
