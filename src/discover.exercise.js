@@ -6,9 +6,10 @@ import Tooltip from '@reach/tooltip'
 import React from 'react'
 import {FaSearch, FaTimes} from 'react-icons/fa'
 import * as colors from 'styles/colors'
-import {Input, BookListUL, Spinner} from './components/lib'
-import {BookRow} from './components/book-row'
-import {client} from './utils/api-client'
+import {Input, BookListUL, Spinner} from 'components/lib'
+import {BookRow} from 'components/book-row'
+import {client} from 'utils/api-client.exercise'
+import {useAsync} from 'utils/hooks'
 
 const STATUSES = {
   IDLE: 'idle',
@@ -18,38 +19,20 @@ const STATUSES = {
 }
 
 function DiscoverBooksScreen() {
-  // 🐨 add state for status ('idle', 'loading', or 'success'), data, and query
-  const [status, setStatus] = React.useState(STATUSES.IDLE)
-  const [data, setData] = React.useState(null)
-  const [error, setError] = React.useState('')
   const [query, setQuery] = React.useState('')
   const [queried, setQueried] = React.useState(false)
+
+  const {data, error, run, isLoading, isError, isSuccess} = useAsync()
 
   React.useEffect(() => {
     if (!queried) {
       return
     }
 
-    setStatus(STATUSES.LOADING)
-
     const endpoint = `books?query=${encodeURIComponent(query)}`
 
-    client(endpoint)
-      .then(apiData => {
-        setData(apiData)
-
-        setStatus(STATUSES.SUCCESS)
-      })
-      .catch(errorData => {
-        setError(errorData)
-
-        setStatus(STATUSES.ERROR)
-      })
-  }, [queried, query])
-
-  const isLoading = status === STATUSES.LOADING
-  const isSuccess = status === STATUSES.SUCCESS
-  const isError = status === STATUSES.ERROR
+    run(client(endpoint))
+  }, [queried, query, run])
 
   function handleSearchSubmit(event) {
     event.preventDefault()
