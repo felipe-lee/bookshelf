@@ -1,12 +1,15 @@
 /** @jsx jsx */
 import {jsx} from '@emotion/core'
+import {FullPageSpinner} from 'components/lib'
 
 import * as React from 'react'
 
 import * as auth from 'auth-provider'
 import {AuthenticatedApp} from 'authenticated-app'
+import * as colors from 'styles/colors'
 import {UnauthenticatedApp} from 'unauthenticated-app'
 import {client} from 'utils/api-client'
+import {useAsync} from 'utils/hooks'
 
 const UNAUTHENTICATED_USER = null
 
@@ -25,11 +28,20 @@ const checkForLoggedInUser = async () => {
 }
 
 function App() {
-  const [user, setUser] = React.useState(UNAUTHENTICATED_USER)
+  const {
+    data: user,
+    error,
+    isIdle,
+    isLoading,
+    isSuccess,
+    isError,
+    run,
+    setData: setUser,
+  } = useAsync()
 
   React.useEffect(() => {
-    checkForLoggedInUser().then(u => setUser(u))
-  }, [])
+    run(checkForLoggedInUser())
+  }, [run])
 
   const login = form => auth.login(form).then(u => setUser(u))
 
@@ -40,11 +52,31 @@ function App() {
     setUser(UNAUTHENTICATED_USER)
   }
 
-  return user ? (
-    <AuthenticatedApp user={user} logout={logout} />
-  ) : (
-    <UnauthenticatedApp login={login} register={register} />
-  )
+  if (isIdle || isLoading) {
+    return <FullPageSpinner />
+  } else if (isError) {
+    return (
+      <div
+        css={{
+          color: colors.danger,
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <p>Uh oh... There's a problem. Try refreshing the app.</p>
+        <pre>{error.message}</pre>
+      </div>
+    )
+  } else if (isSuccess) {
+    return user ? (
+      <AuthenticatedApp user={user} logout={logout} />
+    ) : (
+      <UnauthenticatedApp login={login} register={register} />
+    )
+  }
 }
 
 export {App}
