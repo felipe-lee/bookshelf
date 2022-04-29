@@ -2,15 +2,16 @@
 import {jsx} from '@emotion/core'
 
 import * as React from 'react'
-import * as auth from 'auth-provider'
 import {BrowserRouter as Router} from 'react-router-dom'
-// 🐨 you'll need the queryCache from react-query
-import {FullPageSpinner} from './components/lib'
-import * as colors from './styles/colors'
-import {client} from './utils/api-client'
-import {useAsync} from './utils/hooks'
-import {AuthenticatedApp} from './authenticated-app'
-import {UnauthenticatedApp} from './unauthenticated-app'
+import {queryCache} from 'react-query'
+
+import * as auth from 'auth-provider'
+import {AuthenticatedApp} from 'authenticated-app'
+import {FullPageSpinner} from 'components/lib'
+import * as colors from 'styles/colors'
+import {UnauthenticatedApp} from 'unauthenticated-app'
+import {client} from 'utils/api-client'
+import {useAsync} from 'utils/hooks'
 
 async function getUser() {
   let user = null
@@ -44,7 +45,9 @@ function App() {
   const register = form => auth.register(form).then(user => setData(user))
   const logout = () => {
     auth.logout()
-    // 🐨 clear the query cache with queryCache.clear()
+
+    queryCache.clear()
+
     setData(null)
   }
 
