@@ -5,47 +5,23 @@ import debounceFn from 'debounce-fn'
 import Tooltip from '@reach/tooltip'
 import * as React from 'react'
 import {FaRegCalendarAlt} from 'react-icons/fa'
-import {useQuery, useMutation, queryCache} from 'react-query'
 import {useParams} from 'react-router-dom'
 
-import bookPlaceholderSvg from 'assets/book-placeholder.svg'
 import {Textarea} from 'components/lib'
 import {Rating} from 'components/rating'
 import {StatusButtons} from 'components/status-buttons'
 import * as colors from 'styles/colors'
 import * as mq from 'styles/media-queries'
-import {client} from 'utils/api-client'
+import {useBook} from 'utils/books'
+import {useListItem, useUpdateListItem} from 'utils/list-items'
 import {formatDate} from 'utils/misc'
-
-const loadingBook = {
-  title: 'Loading...',
-  author: 'loading...',
-  coverImageUrl: bookPlaceholderSvg,
-  publisher: 'Loading Publishing',
-  synopsis: 'Loading...',
-  loadingBook: true,
-}
 
 function BookScreen({user}) {
   const {bookId} = useParams()
 
-  const BOOK_QUERY_KEY = ['book', {bookId}]
+  const book = useBook(bookId, user)
 
-  const {data: book = loadingBook} = useQuery({
-    queryKey: BOOK_QUERY_KEY,
-    queryFn: () =>
-      client(`books/${bookId}`, {token: user.token}).then(data => data.book),
-  })
-
-  const LIST_ITEMS_QUERY_KEY = 'list-items'
-
-  const {data: listItems} = useQuery({
-    queryKey: LIST_ITEMS_QUERY_KEY,
-    queryFn: () =>
-      client('list-items', {token: user.token}).then(data => data.listItems),
-  })
-
-  const listItem = listItems?.find(item => item.bookId === book.id) ?? null
+  const listItem = useListItem(user, bookId)
 
   const {title, author, coverImageUrl, publisher, synopsis} = book
 
@@ -129,13 +105,7 @@ function ListItemTimeframe({listItem}) {
 }
 
 function NotesTextarea({listItem, user}) {
-  const LIST_ITEMS_QUERY_KEY = 'list-items'
-
-  const [mutate] = useMutation(
-    data =>
-      client(`list-items/${data.id}`, {method: 'PUT', data, token: user.token}),
-    {onSettled: () => queryCache.invalidateQueries(LIST_ITEMS_QUERY_KEY)},
-  )
+  const [mutate] = useUpdateListItem(user)
 
   const debouncedMutate = React.useMemo(
     () => debounceFn(mutate, {wait: 300}),
