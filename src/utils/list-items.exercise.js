@@ -24,24 +24,24 @@ const defaultMutationOptions = {
   onSettled: () => queryCache.invalidateQueries(LIST_ITEMS_QUERY_KEY),
 }
 
-const useUpdateListItem = user => {
+const useUpdateListItem = (user, mutationOptionOverrides = {}) => {
   return useMutation(
     data =>
       client(`list-items/${data.id}`, {method: 'PUT', data, token: user.token}),
-    defaultMutationOptions,
+    {...defaultMutationOptions, ...mutationOptionOverrides},
   )
 }
-const useRemoveListItem = user => {
+const useRemoveListItem = (user, mutationOptionOverrides = {}) => {
   return useMutation(
     ({listItemId}) =>
       client(`list-items/${listItemId}`, {method: 'DELETE', token: user.token}),
-    defaultMutationOptions,
+    {...defaultMutationOptions, ...mutationOptionOverrides},
   )
 }
-const useCreateListItem = user => {
+const useCreateListItem = (user, mutationOptionOverrides = {}) => {
   return useMutation(
     ({bookId}) => client('list-items', {data: {bookId}, token: user.token}),
-    defaultMutationOptions,
+    {...defaultMutationOptions, ...mutationOptionOverrides},
   )
 }
 
