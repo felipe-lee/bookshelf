@@ -29,6 +29,11 @@ const useListItem = (user, bookId) => {
 }
 
 const defaultMutationOptions = {
+  onError: (err, variables, recover) => {
+    if (typeof recover === 'function') {
+      recover()
+    }
+  },
   onSettled: () => queryCache.invalidateQueries(LIST_ITEMS_QUERY_KEY),
 }
 
@@ -36,14 +41,40 @@ const useUpdateListItem = (user, mutationOptionOverrides = {}) => {
   return useMutation(
     data =>
       client(`list-items/${data.id}`, {method: 'PUT', data, token: user.token}),
-    {...defaultMutationOptions, ...mutationOptionOverrides},
+    {
+      ...defaultMutationOptions,
+      onMutate: data => {
+        const currentData = queryCache.getQueryData(LIST_ITEMS_QUERY_KEY)
+
+        queryCache.setQueryData(LIST_ITEMS_QUERY_KEY, currentData => {
+          return currentData.map(item => {
+            return item.id === data.id ? {...item, ...data} : item
+          })
+        })
+
+        return () => queryCache.setQueryData(LIST_ITEMS_QUERY_KEY, currentData)
+      },
+      ...mutationOptionOverrides,
+    },
   )
 }
 const useRemoveListItem = (user, mutationOptionOverrides = {}) => {
   return useMutation(
     ({listItemId}) =>
       client(`list-items/${listItemId}`, {method: 'DELETE', token: user.token}),
-    {...defaultMutationOptions, ...mutationOptionOverrides},
+    {
+      ...defaultMutationOptions,
+      onMutate: ({listItemId}) => {
+        const currentData = queryCache.getQueryData(LIST_ITEMS_QUERY_KEY)
+
+        queryCache.setQueryData(LIST_ITEMS_QUERY_KEY, currentData => {
+          return currentData.filter(item => item.id !== listItemId)
+        })
+
+        return () => queryCache.setQueryData(LIST_ITEMS_QUERY_KEY, currentData)
+      },
+      ...mutationOptionOverrides,
+    },
   )
 }
 const useCreateListItem = (user, mutationOptionOverrides = {}) => {
