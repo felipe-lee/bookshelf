@@ -4,12 +4,13 @@ import {jsx} from '@emotion/core'
 import * as React from 'react'
 import * as auth from 'auth-provider'
 import {BrowserRouter as Router} from 'react-router-dom'
-import {FullPageSpinner, FullPageErrorFallback} from './components/lib'
-import {client} from './utils/api-client'
-import {useAsync} from './utils/hooks'
-// 🐨 import the AuthContext you created in ./context/auth-context
-import {AuthenticatedApp} from './authenticated-app'
-import {UnauthenticatedApp} from './unauthenticated-app'
+
+import {AuthenticatedApp} from 'authenticated-app'
+import {FullPageSpinner, FullPageErrorFallback} from 'components/lib'
+import {AuthContext} from 'context/auth-context'
+import {UnauthenticatedApp} from 'unauthenticated-app'
+import {client} from 'utils/api-client'
+import {useAsync} from 'utils/hooks'
 
 async function getUser() {
   let user = null
@@ -56,15 +57,16 @@ function App() {
 
   if (isSuccess) {
     const props = {user, login, register, logout}
-    // 🐨 wrap all of this in the AuthContext.Provider and set the `value` to props
-    return user ? (
-      <Router>
-        {/* 💣 remove the props spread here */}
-        <AuthenticatedApp {...props} />
-      </Router>
-    ) : (
-      // 💣 remove the props spread here
-      <UnauthenticatedApp {...props} />
+    return (
+      <AuthContext.Provider value={props}>
+        {user ? (
+          <Router>
+            <AuthenticatedApp />
+          </Router>
+        ) : (
+          <UnauthenticatedApp />
+        )}
+      </AuthContext.Provider>
     )
   }
 }

@@ -1,13 +1,11 @@
 import * as React from 'react'
+
 import {Link} from 'components/lib'
 import {ListItemList} from 'components/list-item-list'
 
-// 💣 remove the user prop here
-function ReadingListScreen({user}) {
+function ReadingListScreen() {
   return (
     <ListItemList
-      // 💣 remove the user prop here
-      user={user}
       filterListItems={li => !li.finishDate}
       noListItems={
         <p>
