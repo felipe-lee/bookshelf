@@ -1,12 +1,11 @@
-import * as React from 'react'
 import {useQuery, useMutation, queryCache} from 'react-query'
 
-import {AuthContext} from 'context/auth-context'
+import {useAuth} from 'context/auth-context'
 import {client} from 'utils/api-client'
 import {setQueryDataForBook} from 'utils/books'
 
 function useListItems() {
-  const {user} = React.useContext(AuthContext)
+  const {user} = useAuth()
 
   const {data} = useQuery({
     queryKey: 'list-items',
@@ -33,7 +32,7 @@ const defaultMutationOptions = {
 }
 
 function useUpdateListItem(options) {
-  const {user} = React.useContext(AuthContext)
+  const {user} = useAuth()
 
   return useMutation(
     updates =>
@@ -61,7 +60,7 @@ function useUpdateListItem(options) {
 }
 
 function useRemoveListItem(options) {
-  const {user} = React.useContext(AuthContext)
+  const {user} = useAuth()
 
   return useMutation(
     ({id}) => client(`list-items/${id}`, {method: 'DELETE', token: user.token}),
@@ -82,7 +81,7 @@ function useRemoveListItem(options) {
 }
 
 function useCreateListItem(options) {
-  const {user} = React.useContext(AuthContext)
+  const {user} = useAuth()
 
   return useMutation(
     ({bookId}) => client(`list-items`, {data: {bookId}, token: user.token}),

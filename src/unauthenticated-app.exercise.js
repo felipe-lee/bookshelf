@@ -6,7 +6,7 @@ import * as React from 'react'
 import {Input, Button, Spinner, FormGroup, ErrorMessage} from 'components/lib'
 import {Logo} from 'components/logo'
 import {Modal, ModalContents, ModalOpenButton} from 'components/modal'
-import {AuthContext} from 'context/auth-context'
+import {useAuth} from 'context/auth-context'
 import {useAsync} from 'utils/hooks'
 
 function LoginForm({onSubmit, submitButton}) {
@@ -61,7 +61,7 @@ function LoginForm({onSubmit, submitButton}) {
 }
 
 function UnauthenticatedApp() {
-  const {login, register} = React.useContext(AuthContext)
+  const {login, register} = useAuth()
 
   return (
     <div
