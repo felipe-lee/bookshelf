@@ -76,3 +76,14 @@ export const AuthProvider = props => {
     return <AuthContext.Provider value={authValue} {...props} />
   }
 }
+
+export const useClient = () => {
+  const {
+    user: {token},
+  } = useAuth()
+
+  return React.useCallback(
+    (endpoint, config = {}) => client(endpoint, {...config, token}),
+    [token],
+  )
+}

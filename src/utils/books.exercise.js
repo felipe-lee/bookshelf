@@ -2,8 +2,7 @@ import * as React from 'react'
 import {useQuery, queryCache} from 'react-query'
 
 import bookPlaceholderSvg from 'assets/book-placeholder.svg'
-import {useAuth} from 'context/auth-context'
-import {client} from 'utils/api-client'
+import {useClient} from 'context/auth-context'
 
 const loadingBook = {
   title: 'Loading...',
@@ -21,12 +20,12 @@ const loadingBooks = Array.from({length: 10}, (v, index) => ({
 
 // 🦉 note that this is *not* treated as a hook and is instead called by other hooks
 // So we'll continue to accept the user here.
-const getBookSearchConfig = (query, user) => ({
+const getBookSearchConfig = (query, authClient) => ({
   queryKey: ['bookSearch', {query}],
   queryFn: () =>
-    client(`books?query=${encodeURIComponent(query)}`, {
-      token: user.token,
-    }).then(data => data.books),
+    authClient(`books?query=${encodeURIComponent(query)}`).then(
+      data => data.books,
+    ),
   config: {
     onSuccess(books) {
       for (const book of books) {
@@ -37,32 +36,31 @@ const getBookSearchConfig = (query, user) => ({
 })
 
 function useBookSearch(query) {
-  const {user} = useAuth()
+  const authClient = useClient()
 
-  const result = useQuery(getBookSearchConfig(query, user))
+  const result = useQuery(getBookSearchConfig(query, authClient))
 
   return {...result, books: result.data ?? loadingBooks}
 }
 
 function useBook(bookId) {
-  const {user} = useAuth()
+  const authClient = useClient()
 
   const {data} = useQuery({
     queryKey: ['book', {bookId}],
-    queryFn: () =>
-      client(`books/${bookId}`, {token: user.token}).then(data => data.book),
+    queryFn: () => authClient(`books/${bookId}`).then(data => data.book),
   })
   return data ?? loadingBook
 }
 
 const useRefetchBookSearchQuery = () => {
-  const {user} = useAuth()
+  const authClient = useClient()
 
   return React.useCallback(async () => {
     queryCache.removeQueries('bookSearch')
 
-    await queryCache.prefetchQuery(getBookSearchConfig('', user))
-  }, [user])
+    await queryCache.prefetchQuery(getBookSearchConfig('', authClient))
+  }, [authClient])
 }
 
 const bookQueryConfig = {
