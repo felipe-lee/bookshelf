@@ -37,13 +37,19 @@ const Modal = props => {
   return <ModalContext.Provider value={{isOpen, setIsOpen}} {...props} />
 }
 
+const callAll =
+  (...fns) =>
+  (...args) => {
+    for (const fn of fns) {
+      fn(args)
+    }
+  }
+
 const ModalDismissButton = ({children: child}) => {
   const {setIsOpen} = useModal()
 
   return React.cloneElement(child, {
-    onClick: () => {
-      setIsOpen(false)
-    },
+    onClick: callAll(() => setIsOpen(false), child.props.onClick),
   })
 }
 
@@ -51,9 +57,7 @@ const ModalOpenButton = ({children: child}) => {
   const {setIsOpen} = useModal()
 
   return React.cloneElement(child, {
-    onClick: () => {
-      setIsOpen(true)
-    },
+    onClick: callAll(() => setIsOpen(true), child.props.onClick),
   })
 }
 
