@@ -1,9 +1,11 @@
-// 🐨 you're going to need the Dialog component
-// It's just a light wrapper around ReachUI Dialog
-// 📜 https://reacttraining.com/reach-ui/dialog/
-// import {Dialog} from './lib'
+/** @jsx jsx */
+import {jsx} from '@emotion/core'
+import VisuallyHidden from '@reach/visually-hidden'
+import * as React from 'react'
 
-// 💰 Here's a reminder of how your components will be used:
+import {CircleButton, Dialog} from 'components/lib'
+
+// Sample usage:
 /*
 <Modal>
   <ModalOpenButton>
@@ -19,27 +21,86 @@
 </Modal>
 */
 
-// we need this set of compound components to be structurally flexible
-// meaning we don't have control over the structure of the components. But
-// we still want to have implicitly shared state, so...
-// 🐨 create a ModalContext here with React.createContext
+const ModalContext = React.createContext()
+ModalContext.displayName = 'ModalContext'
 
-// 🐨 create a Modal component that manages the isOpen state (via useState)
-// and renders the ModalContext.Provider with the value which will pass the
-// isOpen state and setIsOpen function
+const useModal = () => {
+  const context = React.useContext(ModalContext)
 
-// 🐨 create a ModalDismissButton component that accepts children which will be
-// the button which we want to clone to set it's onClick prop to trigger the
-// modal to close
-// 📜 https://reactjs.org/docs/react-api.html#cloneelement
-// 💰 to get the setIsOpen function you'll need, you'll have to useContext!
-// 💰 keep in mind that the children prop will be a single child (the user's button)
+  if (context === undefined) {
+    throw new Error('useModal must be used within a ModalContext.Provider')
+  }
 
-// 🐨 create a ModalOpenButton component which is effectively the same thing as
-// ModalDismissButton except the onClick sets isOpen to true
+  return context
+}
 
-// 🐨 create a ModalContents component which renders the Dialog.
-// Set the isOpen prop and the onDismiss prop should set isOpen to close
-// 💰 be sure to forward along the rest of the props (especially children).
+const Modal = props => {
+  const [isOpen, setIsOpen] = React.useState(false)
 
-// 🐨 don't forget to export all the components here
+  return <ModalContext.Provider value={{isOpen, setIsOpen}} {...props} />
+}
+
+const callAll =
+  (...fns) =>
+  (...args) => {
+    for (const fn of fns) {
+      fn(args)
+    }
+  }
+
+const ModalDismissButton = ({children: child}) => {
+  const {setIsOpen} = useModal()
+
+  return React.cloneElement(child, {
+    onClick: callAll(() => setIsOpen(false), child.props.onClick),
+  })
+}
+
+const ModalOpenButton = ({children: child}) => {
+  const {setIsOpen} = useModal()
+
+  return React.cloneElement(child, {
+    onClick: callAll(() => setIsOpen(true), child.props.onClick),
+  })
+}
+
+const ModalContentsBase = props => {
+  const {isOpen, setIsOpen} = useModal()
+
+  return (
+    <Dialog isOpen={isOpen} onDismiss={() => setIsOpen(false)} {...props} />
+  )
+}
+
+const CircleDismissButton = () => {
+  return (
+    <div css={{display: 'flex', justifyContent: 'flex-end'}}>
+      <ModalDismissButton>
+        <CircleButton>
+          <VisuallyHidden>Close</VisuallyHidden>
+          <span aria-hidden>×</span>
+        </CircleButton>
+      </ModalDismissButton>
+    </div>
+  )
+}
+
+const ModalContents = ({title, children, ...props}) => {
+  return (
+    <ModalContentsBase {...props}>
+      <CircleDismissButton />
+
+      <h3 css={{textAlign: 'center', fontSize: '2em'}}>{title}</h3>
+
+      {children}
+    </ModalContentsBase>
+  )
+}
+
+export {
+  Modal,
+  ModalContents,
+  ModalContentsBase,
+  ModalDismissButton,
+  ModalOpenButton,
+}
