@@ -1,9 +1,10 @@
 /** @jsx jsx */
 import {jsx} from '@emotion/core'
 
+import {BookRow} from 'components/book-row'
+import {BookListUL} from 'components/lib'
+import {Profiler} from 'components/profiler'
 import {useListItems} from 'utils/list-items'
-import {BookListUL} from './lib'
-import {BookRow} from './book-row'
 
 function ListItemList({filterListItems, noListItems, noFilteredListItems}) {
   const listItems = useListItems()
@@ -22,13 +23,18 @@ function ListItemList({filterListItems, noListItems, noFilteredListItems}) {
   }
 
   return (
-    <BookListUL>
-      {filteredListItems.map(listItem => (
-        <li key={listItem.id} aria-label={listItem.book.title}>
-          <BookRow book={listItem.book} />
-        </li>
-      ))}
-    </BookListUL>
+    <Profiler
+      id="List Item List"
+      metadata={{listItemCount: filteredListItems.length}}
+    >
+      <BookListUL>
+        {filteredListItems.map(listItem => (
+          <li key={listItem.id} aria-label={listItem.book.title}>
+            <BookRow book={listItem.book} />
+          </li>
+        ))}
+      </BookListUL>
+    </Profiler>
   )
 }
 

@@ -3,15 +3,16 @@ import {jsx} from '@emotion/core'
 
 import {Routes, Route, Link as RouterLink, useMatch} from 'react-router-dom'
 import {ErrorBoundary} from 'react-error-boundary'
-import {Button, ErrorMessage, FullPageErrorFallback} from './components/lib'
-import * as mq from './styles/media-queries'
-import * as colors from './styles/colors'
-import {useAuth} from './context/auth-context'
-import {ReadingListScreen} from './screens/reading-list'
-import {FinishedScreen} from './screens/finished'
-import {DiscoverBooksScreen} from './screens/discover'
-import {BookScreen} from './screens/book'
-import {NotFoundScreen} from './screens/not-found'
+
+import {Button, ErrorMessage, FullPageErrorFallback} from 'components/lib'
+import {useAuth} from 'context/auth-context'
+import {BookScreen} from 'screens/book'
+import {DiscoverBooksScreen} from 'screens/discover'
+import {FinishedScreen} from 'screens/finished'
+import {NotFoundScreen} from 'screens/not-found'
+import {ReadingListScreen} from 'screens/reading-list'
+import * as colors from 'styles/colors'
+import * as mq from 'styles/media-queries'
 
 function ErrorFallback({error}) {
   return (
@@ -157,9 +158,4 @@ function AppRoutes() {
   )
 }
 
-// 🐨 change this to a default export
-export {AuthenticatedApp}
-
-// 🐨 Unfortunately, to make this work for our workshop,
-// you need to add this to src/authenticated-app.js:
-// export {default} from './authenticated-app.exercise'
+export default AuthenticatedApp
