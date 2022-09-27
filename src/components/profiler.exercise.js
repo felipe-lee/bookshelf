@@ -22,7 +22,7 @@ export const PHASES = {
   UPDATE: 'update',
 }
 
-export const Profiler = ({phases, ...props}) => {
+export const Profiler = ({metadata, phases, ...props}) => {
   const reportProfile = (
     id, // the "id" prop of the Profiler tree that has just committed
     phase, // either "mount" (if the tree just mounted) or "update" (if it re-rendered)
@@ -35,6 +35,7 @@ export const Profiler = ({phases, ...props}) => {
     if (!phases || phases.includes(phase)) {
       queue.push({
         id,
+        metadata,
         phase,
         actualDuration,
         baseDuration,
