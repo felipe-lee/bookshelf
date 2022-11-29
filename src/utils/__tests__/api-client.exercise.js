@@ -20,12 +20,6 @@ jest.mock('auth-provider', () => {
   }
 })
 
-beforeAll(() => server.listen())
-
-afterAll(() => server.close())
-
-afterEach(() => server.resetHandlers())
-
 const apiURL = process.env.REACT_APP_API_URL
 
 test('calls fetch at the endpoint with the arguments for GET requests', async () => {
