@@ -1,5 +1,24 @@
+import * as auth from 'auth-provider'
+import {queryCache} from 'react-query'
+
 import {server, rest} from 'test/server'
 import {client} from 'utils/api-client'
+
+jest.mock('react-query', () => {
+  return {
+    ...jest.requireActual('react-query'),
+    queryCache: {
+      clear: jest.fn().mockName('mockClear'),
+    },
+  }
+})
+
+jest.mock('auth-provider', () => {
+  return {
+    ...jest.requireActual('auth-provider'),
+    logout: jest.fn().mockName('mockLogout'),
+  }
+})
 
 beforeAll(() => server.listen())
 
@@ -83,4 +102,46 @@ test('when data is provided, it is stringified and the method defaults to POST',
   await client(endpoint, {data})
 
   expect(request.body).toEqual(data)
+})
+
+test('automatically logs out and clears cache if response is a 401', async () => {
+  const data = {
+    name: 'Bobby Tables',
+  }
+
+  const endpoint = 'test-endpoint'
+
+  server.use(
+    rest.post(`${apiURL}/${endpoint}`, async (req, res, ctx) => {
+      return res(
+        ctx.status(401),
+        ctx.json({message: 'You need to log in for this!'}),
+      )
+    }),
+  )
+
+  const response = await client(endpoint, {data}).catch(e => e)
+
+  expect(response.message).toMatchInlineSnapshot(`"Please re-authenticate."`)
+
+  expect(queryCache.clear).toHaveBeenCalledTimes(1)
+  expect(auth.logout).toHaveBeenCalledTimes(1)
+})
+
+test('if the response is not successful, then we get the error back', async () => {
+  const data = {
+    name: 'Bobby Tables',
+  }
+
+  const errPayload = {message: 'That name would delete everything!'}
+
+  const endpoint = 'test-endpoint'
+
+  server.use(
+    rest.post(`${apiURL}/${endpoint}`, async (req, res, ctx) => {
+      return res(ctx.status(400), ctx.json(errPayload))
+    }),
+  )
+
+  await expect(client(endpoint, {data})).rejects.toEqual(errPayload)
 })
