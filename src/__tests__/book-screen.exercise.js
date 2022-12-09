@@ -5,46 +5,40 @@ import {queryCache} from 'react-query'
 import {App} from 'app'
 import * as auth from 'auth-provider'
 import {AppProviders} from 'context'
+import * as booksDB from 'test/data/books'
+import * as listItemsDB from 'test/data/list-items'
+import * as usersDB from 'test/data/users'
 import {buildUser, buildBook} from 'test/generate'
 
 afterEach(async () => {
   queryCache.clear()
 
-  await auth.logout()
+  await Promise.all([
+    auth.logout(),
+    usersDB.reset(),
+    booksDB.reset(),
+    listItemsDB.reset(),
+  ])
 })
 
 test('renders all the book information', async () => {
   const user = buildUser()
-  const fakeToken = 'fake_token'
-  window.localStorage.setItem(auth.localStorageKey, fakeToken)
+  await usersDB.create(user)
+  const authUser = await usersDB.authenticate(user)
+
+  window.localStorage.setItem(auth.localStorageKey, authUser.token)
 
   const book = buildBook()
+  await booksDB.create(book)
 
   window.history.pushState({}, '', `/book/${book.id}`)
 
-  const originalFetch = window.fetch
-  window.fetch = async (url, config) => {
-    let data
-    if (url.endsWith('/bootstrap')) {
-      data = {
-        user: {...user, token: fakeToken},
-        listItems: [],
-      }
-    } else if (url.endsWith('/list-items')) {
-      data = {listItems: []}
-    } else if (url.endsWith(`/books/${book.id}`)) {
-      data = {book}
-    }
-    if (data) {
-      return Promise.resolve({ok: true, json: async () => data})
-    } else {
-      return originalFetch(url, config)
-    }
-  }
-
   render(<App />, {wrapper: AppProviders})
 
-  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
+  await waitForElementToBeRemoved(() => [
+    ...screen.queryAllByLabelText(/loading/i),
+    ...screen.queryAllByText(/loading/i),
+  ])
 
   expect(
     await screen.findByRole('heading', {level: 1, name: book.title}),
