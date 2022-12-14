@@ -1,57 +1,15 @@
 import * as React from 'react'
-import {queryCache} from 'react-query'
-import {
-  render as baseRender,
-  screen,
-  waitForElementToBeRemoved,
-} from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 
 import {App} from 'app'
-import * as auth from 'auth-provider'
-import {AppProviders} from 'context'
+import {
+  render,
+  screen,
+  userEvent,
+  waitForLoadingToFinish,
+} from 'test/app-test-utils'
 import * as booksDB from 'test/data/books'
-import * as listItemsDB from 'test/data/list-items'
-import * as usersDB from 'test/data/users'
-import {buildUser, buildBook} from 'test/generate'
+import {buildBook} from 'test/generate'
 import {formatDate} from 'utils/misc'
-
-afterEach(async () => {
-  queryCache.clear()
-
-  await Promise.all([
-    auth.logout(),
-    usersDB.reset(),
-    booksDB.reset(),
-    listItemsDB.reset(),
-  ])
-})
-const loginAsUser = async userProperties => {
-  const user = buildUser(userProperties)
-
-  await usersDB.create(user)
-
-  const authUser = await usersDB.authenticate(user)
-
-  window.localStorage.setItem(auth.localStorageKey, authUser.token)
-
-  return user
-}
-
-const render = async (ui, {route = '/list', user, ...renderOptions} = {}) => {
-  user = typeof user === 'undefined' ? await loginAsUser() : user
-
-  window.history.pushState({}, '', route)
-
-  const rtlHelpers = baseRender(ui, {wrapper: AppProviders, ...renderOptions})
-
-  await waitForLoadingToFinish()
-
-  return {
-    ...rtlHelpers,
-    user,
-  }
-}
 
 const renderBookPage = async (ui, options) => {
   const book = buildBook()
@@ -61,12 +19,6 @@ const renderBookPage = async (ui, options) => {
 
   return {...renderReturn, book}
 }
-
-const waitForLoadingToFinish = () =>
-  waitForElementToBeRemoved(() => [
-    ...screen.queryAllByLabelText(/loading/i),
-    ...screen.queryAllByText(/loading/i),
-  ])
 
 test('renders all the book information', async () => {
   const {book} = await renderBookPage(<App />)
