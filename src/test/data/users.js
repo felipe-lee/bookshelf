@@ -110,4 +110,4 @@ async function reset() {
   persist()
 }
 
-export {authenticate, create, read, update, remove, reset, hash}
+export {authenticate, create, read, update, remove, reset}

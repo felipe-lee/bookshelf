@@ -1,11 +1,9 @@
 import faker from 'faker'
-import {hash} from 'test/data/users'
 
 function buildUser(overrides) {
-  const username = faker.internet.userName()
   return {
-    id: hash(username),
-    username,
+    id: faker.datatype.uuid(),
+    username: faker.internet.userName(),
     password: faker.internet.password(),
     ...overrides,
   }
@@ -28,8 +26,8 @@ function buildListItem(overrides = {}) {
   const {
     bookId = overrides.book ? overrides.book.id : faker.datatype.uuid(),
     startDate = faker.date.past(2).getTime(),
-    finishDate = faker.date.between(startDate, new Date()).getTime(),
-    owner = {ownerId: hash(faker.internet.userName())},
+    finishDate = faker.date.between(new Date(startDate), new Date()).getTime(),
+    owner = {ownerId: faker.datatype.uuid()},
   } = overrides
   return {
     id: faker.datatype.uuid(),
