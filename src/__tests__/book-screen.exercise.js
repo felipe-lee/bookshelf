@@ -1,4 +1,5 @@
 import faker from 'faker'
+import {rest} from 'msw'
 import * as React from 'react'
 
 import {App} from 'app'
@@ -12,7 +13,12 @@ import {
 import * as booksDB from 'test/data/books'
 import * as listItemsDB from 'test/data/list-items'
 import {buildBook, buildListItem} from 'test/generate'
+import {server} from 'test/server'
 import {formatDate} from 'utils/misc'
+
+const fakeTimerUserEvent = userEvent.setup({
+  advanceTimers: () => jest.runOnlyPendingTimers(),
+})
 
 const renderBookScreen = async ({user, book, listItem} = {}) => {
   if (user === undefined) {
@@ -168,10 +174,6 @@ test('can edit a note', async () => {
 
   const notesTextBox = screen.getByRole('textbox', {name: /notes/i})
 
-  const fakeTimerUserEvent = userEvent.setup({
-    advanceTimers: () => jest.runOnlyPendingTimers(),
-  })
-
   const notes = faker.lorem.words()
 
   await fakeTimerUserEvent.clear(notesTextBox)
@@ -184,4 +186,60 @@ test('can edit a note', async () => {
   expect(notesTextBox).toHaveValue(notes)
 
   expect(await listItemsDB.read(listItem.id)).toMatchObject({notes})
+})
+
+describe('console errors', () => {
+  beforeAll(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterAll(() => {
+    console.error.mockRestore()
+  })
+
+  test('shows an error message when the book fails to load', async () => {
+    const book = buildBook()
+
+    await renderBookScreen({book, listItem: null})
+
+    expect(
+      (await screen.findByRole('alert')).textContent,
+    ).toMatchInlineSnapshot(`"There was an error: Book not found"`)
+  })
+
+  test('note update failures are displayed', async () => {
+    const apiURL = process.env.REACT_APP_API_URL
+
+    const testErrorMessage = 'fake error message...'
+    server.use(
+      rest.put(`${apiURL}/list-items/:listItemId`, async (req, res, ctx) => {
+        return res(
+          ctx.status(400),
+          ctx.json({status: 400, message: testErrorMessage}),
+        )
+      }),
+    )
+
+    jest.useFakeTimers()
+
+    const {listItem} = await renderBookScreen()
+    await listItemsDB.update(listItem.id, {notes: ''})
+
+    const notesTextBox = screen.getByRole('textbox', {name: /notes/i})
+
+    const notes = faker.lorem.word()
+    await fakeTimerUserEvent.type(notesTextBox, notes)
+
+    await screen.findByLabelText(/loading/i)
+
+    await waitForLoadingToFinish()
+
+    expect(
+      (await screen.findByRole('alert')).textContent,
+    ).toMatchInlineSnapshot(`"There was an error: fake error message..."`)
+
+    expect(await listItemsDB.read(listItem.id)).not.toMatchObject({
+      notes,
+    })
+  })
 })
